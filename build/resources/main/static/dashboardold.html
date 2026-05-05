@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopLook — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0d0d0d; --paper: #f5f0e8; --cream: #ede8dc; --card: #ffffff;
+    --accent: #c8a96e; --accent-dark: #a08040; --muted: #7a7060;
+    --border: #e0d9ce; --error: #c0392b; --success: #27ae60;
+    --sidebar-w: 260px; --header-h: 64px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+    background: var(--ink); border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; padding: 0 1.5rem;
+    z-index: 100; gap: 1rem;
+  }
+  .brand { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--accent); margin-right: auto; white-space: nowrap; }
+  .brand span { color: #fff; }
+  .header-search { flex: 1; max-width: 400px; position: relative; }
+  .header-search input { width: 100%; padding: 0.55rem 1rem 0.55rem 2.5rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+  .header-search input::placeholder { color: rgba(255,255,255,0.35); }
+  .header-search input:focus { background: rgba(255,255,255,0.12); border-color: var(--accent); }
+  .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.35); font-size: 0.875rem; pointer-events: none; }
+  .header-user { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+  .header-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem; color: var(--ink); overflow: hidden; }
+  .header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .header-username { color: rgba(255,255,255,0.8); font-size: 0.875rem; font-weight: 500; }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: var(--sidebar-w); position: fixed; left: 0; top: var(--header-h); bottom: 0; background: var(--card); border-right: 1px solid var(--border); padding: 1.5rem 0; overflow-y: auto; z-index: 50; }
+  .nav-section { padding: 0 1rem; margin-bottom: 0.5rem; }
+  .nav-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); padding: 0 0.75rem; margin-bottom: 0.25rem; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.75rem; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 400; color: var(--muted); transition: all 0.18s; text-decoration: none; width: 100%; border: none; background: none; text-align: left; }
+  .nav-item:hover { background: var(--paper); color: var(--ink); }
+  .nav-item.active { background: var(--ink); color: #fff; font-weight: 500; }
+  .nav-item.active .nav-icon { color: var(--accent); }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .nav-divider { height: 1px; background: var(--border); margin: 0.75rem 1rem; }
+
+  .create-btn { margin: 1rem; width: calc(100% - 2rem); padding: 0.8rem; background: var(--accent); color: var(--ink); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .create-btn:hover { background: var(--accent-dark); color: #fff; transform: translateY(-1px); }
+
+  /* ── MAIN ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem; max-width: calc(100% - var(--sidebar-w)); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── PAGE HEADER ── */
+  .page-header { margin-bottom: 2rem; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; margin-bottom: 0.25rem; }
+  .page-sub { font-size: 0.875rem; color: var(--muted); font-weight: 300; }
+
+  /* ── CARDS ── */
+  .post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+
+  .post-card { background: var(--card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s; }
+  .post-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+
+  .post-img { width: 100%; height: 260px; object-fit: cover; background: var(--cream); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 3rem; }
+  .post-img img { width: 100%; height: 100%; object-fit: cover; }
+  .post-img.placeholder { background: linear-gradient(135deg, var(--cream) 0%, #d5cfc5 100%); }
+
+  .post-body { padding: 1rem 1.25rem; }
+  .post-author { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .post-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--ink); overflow: hidden; flex-shrink: 0; }
+  .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .post-author-info { flex: 1; min-width: 0; }
+  .post-author-name { font-size: 0.875rem; font-weight: 600; color: var(--ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .post-author-name:hover { color: var(--accent); }
+  .post-date { font-size: 0.75rem; color: var(--muted); }
+
+  .post-desc { font-size: 0.9rem; line-height: 1.55; color: var(--ink); margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .post-actions { display: flex; gap: 1rem; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+  .action-btn { display: flex; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--muted); padding: 0.35rem 0.6rem; border-radius: 8px; transition: all 0.18s; }
+  .action-btn:hover { background: var(--paper); color: var(--ink); }
+  .action-btn.liked { color: #e74c3c; }
+  .action-btn.liked .like-icon::before { content: '❤️'; }
+  .like-icon::before { content: '🤍'; }
+  .delete-btn { margin-left: auto; color: #ccc; }
+  .delete-btn:hover { color: var(--error); background: #fdf0ef; }
+
+  /* ── PROFILE PAGE ── */
+  .profile-hero { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 2.5rem; margin-bottom: 2rem; }
+  .profile-top { display: flex; align-items: flex-start; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .profile-pic { width: 100px; height: 100px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; color: var(--ink); flex-shrink: 0; overflow: hidden; }
+  .profile-pic img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-info { flex: 1; }
+  .profile-username { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; }
+  .profile-bio { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; font-weight: 300; }
+  .profile-email { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+  .profile-stats { display: flex; gap: 2rem; margin-top: 1rem; }
+  .pstat { text-align: center; }
+  .pstat-num { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+  .pstat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .profile-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn-sm { padding: 0.55rem 1.25rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.18s; border: 1.5px solid; }
+  .btn-primary-sm { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn-primary-sm:hover { background: #1a1a1a; }
+  .btn-outline-sm { background: transparent; color: var(--ink); border-color: var(--border); }
+  .btn-outline-sm:hover { border-color: var(--ink); background: var(--paper); }
+  .btn-accent-sm { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+  .btn-accent-sm:hover { background: var(--accent-dark); color: #fff; }
+  .btn-danger-sm { background: transparent; color: var(--error); border-color: var(--error); }
+  .btn-danger-sm:hover { background: var(--error); color: #fff; }
+
+  /* ── EDIT PROFILE ── */
+  .edit-section { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 1.5rem; }
+  .edit-section h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+  .field { margin-bottom: 1.1rem; }
+  .field label { display: block; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .field input, .field textarea { width: 100%; padding: 0.8rem 1rem; background: var(--paper); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--ink); outline: none; transition: all 0.2s; resize: vertical; }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(200,169,110,0.15); }
+
+  /* ── CREATE POST MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  .modal { background: var(--card); border-radius: 20px; padding: 2rem; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--muted); padding: 0.25rem; line-height: 1; }
+  .modal-close:hover { color: var(--ink); }
+  .img-preview { width: 100%; height: 200px; background: var(--paper); border-radius: 12px; border: 2px dashed var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; overflow: hidden; position: relative; }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .img-placeholder { text-align: center; color: var(--muted); }
+  .img-placeholder .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+  /* ── COMMENTS ── */
+  .comments-panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; margin-top: 1rem; }
+  .comments-title { font-weight: 600; margin-bottom: 1rem; font-size: 0.9rem; }
+  .comment-item { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+  .comment-body { flex: 1; background: var(--paper); border-radius: 12px; padding: 0.75rem 1rem; }
+  .comment-author { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .comment-text { font-size: 0.875rem; line-height: 1.5; }
+  .comment-time { font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; }
+  .comment-form { display: flex; gap: 0.75rem; margin-top: 1rem; }
+  .comment-input { flex: 1; padding: 0.65rem 1rem; background: var(--paper); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+  .comment-input:focus { border-color: var(--accent); }
+  .comment-send { padding: 0.65rem 1.25rem; background: var(--ink); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+  .comment-send:hover { background: #1a1a1a; }
+
+  /* ── USER SEARCH ── */
+  .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+  .user-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem 1.25rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .user-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+  .user-card-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: var(--ink); margin: 0 auto 0.75rem; }
+  .user-card-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+  .user-card-bio { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .follow-toggle { width: 100%; padding: 0.55rem; border-radius: 8px; font-size: 0.8rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; border: 1.5px solid; }
+  .follow-toggle.following { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .follow-toggle.not-following { background: transparent; color: var(--ink); border-color: var(--accent); }
+  .follow-toggle.not-following:hover { background: var(--accent); }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--ink); color: #fff; padding: 0.85rem 1.5rem; border-radius: 12px; font-size: 0.875rem; z-index: 300; transform: translateY(100px); opacity: 0; transition: all 0.3s; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 4px solid var(--success); }
+  .toast.error { border-left: 4px solid var(--error); }
+
+  /* ── LOADING ── */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 4rem; color: var(--muted); gap: 0.75rem; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-state h3 { font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-bottom: 0.5rem; }
+  .empty-state p { font-size: 0.875rem; }
+
+  .alert { padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.2rem; display: none; }
+  .alert.error { background: #fdf0ef; color: var(--error); border: 1px solid #f5c6c2; display: block; }
+  .alert.success { background: #edfaf3; color: var(--success); border: 1px solid #b7e9cb; display: block; }
+
+  /* ── BACK BTN ── */
+  .back-btn { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; color: var(--muted); cursor: pointer; margin-bottom: 1.5rem; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+  .back-btn:hover { color: var(--ink); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border); margin-bottom: 1.75rem; }
+  .tab { padding: 0.65rem 1.25rem; background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.18s; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--ink); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 220px; }
+  }
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .post-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="brand">Top<span>Look</span></div>
+  <div class="header-search">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search users..." oninput="searchUsers(this.value)">
+  </div>
+  <div class="header-user" onclick="showPage('profile')">
+    <div class="header-avatar" id="header-avatar"></div>
+    <span class="header-username" id="header-username">Loading...</span>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <button class="create-btn" onclick="openCreateModal()">+ New Post</button>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Explore</div>
+      <button class="nav-item active" id="nav-feed" onclick="showPage('feed')">
+        <span class="nav-icon">🏠</span> Feed
+      </button>
+      <button class="nav-item" id="nav-explore" onclick="showPage('explore')">
+        <span class="nav-icon">✨</span> Explore
+      </button>
+      <button class="nav-item" id="nav-people" onclick="showPage('people')">
+        <span class="nav-icon">👥</span> People
+      </button>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
+        <span class="nav-icon">👤</span> My Profile
+      </button>
+      <button class="nav-item" id="nav-settings" onclick="showPage('settings')">
+        <span class="nav-icon">⚙️</span> Settings
+      </button>
+      <button class="nav-item" onclick="logout()" style="color: #c0392b;">
+        <span class="nav-icon">🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── FEED PAGE ── -->
+    <div class="page active" id="page-feed">
+      <div class="page-header">
+        <h1 class="page-title">Your Feed</h1>
+        <p class="page-sub">Outfits from people you follow</p>
+      </div>
+      <div id="feed-content" class="post-grid"></div>
+    </div>
+
+    <!-- ── EXPLORE PAGE ── -->
+    <div class="page" id="page-explore">
+      <div class="page-header">
+        <h1 class="page-title">Explore</h1>
+        <p class="page-sub">Discover the latest looks from everyone</p>
+      </div>
+      <div id="explore-content" class="post-grid"></div>
+    </div>
+
+    <!-- ── PEOPLE PAGE ── -->
+    <div class="page" id="page-people">
+      <div class="page-header">
+        <h1 class="page-title">People</h1>
+        <p class="page-sub">Find and follow fashion lovers</p>
+      </div>
+      <div id="people-content" class="users-grid"></div>
+    </div>
+
+    <!-- ── PROFILE PAGE ── -->
+    <div class="page" id="page-profile">
+      <div id="profile-content"></div>
+    </div>
+
+    <!-- ── USER PAGE (other users) ── -->
+    <div class="page" id="page-user">
+      <button class="back-btn" onclick="goBack()">← Back</button>
+      <div id="user-content"></div>
+    </div>
+
+    <!-- ── SETTINGS PAGE ── -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-sub">Update your profile information</p>
+      </div>
+      <div class="edit-section">
+        <h3>Edit Profile</h3>
+        <div class="alert" id="settings-alert"></div>
+        <div class="field"><label>Bio</label><textarea id="settings-bio" rows="3" placeholder="Tell us about your style..."></textarea></div>
+        <div class="field"><label>Avatar URL</label><input type="url" id="settings-avatar" placeholder="https://example.com/photo.jpg"></div>
+        <button class="btn-sm btn-primary-sm" onclick="saveProfile()" style="width:100%; padding: 0.8rem;">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- ── SEARCH RESULTS PAGE ── -->
+    <div class="page" id="page-search">
+      <div class="page-header">
+        <h1 class="page-title">Search Results</h1>
+      </div>
+      <div id="search-content" class="users-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── CREATE POST MODAL ── -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Share Your Look</span>
+      <button class="modal-close" onclick="closeCreateModal()">×</button>
+    </div>
+    <div class="alert" id="create-alert"></div>
+    <div class="img-preview" id="img-preview">
+      <div class="img-placeholder">
+        <div class="icon">📸</div>
+        <p>Paste an image URL below to preview</p>
+      </div>
+    </div>
+    <div class="field"><label>Image URL (optional)</label><input type="url" id="create-imageurl" placeholder="https://..." oninput="previewImage(this.value)"></div>
+    <div class="field"><label>Description</label><textarea id="create-desc" rows="4" placeholder="Describe your outfit, brands, occasion..." style="width:100%; padding:0.8rem 1rem; background:var(--paper); border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; outline:none; resize:vertical;"></textarea></div>
+    <button class="btn-sm btn-accent-sm" id="create-post-btn" onclick="doCreatePost()" style="width:100%; padding:0.85rem; font-size:0.95rem;">Post Outfit</button>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let currentUser = null;
+let prevPage = 'feed';
+let commentsOpen = {};
+let allUsers = [];
+
+// ── INIT ──
+function init() {
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.href = '/'; return; }
+  loadCurrentUser();
+  loadFeed();
+  loadExplore();
+  loadPeople();
+}
+
+function getHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+}
+
+async function loadCurrentUser() {
+  try {
+    const res = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    if (res.status === 401) { logout(); return; }
+    currentUser = await res.json();
+    const initials = currentUser.username[0].toUpperCase();
+    const avatarEl = document.getElementById('header-avatar');
+    if (currentUser.avatarUrl) avatarEl.innerHTML = `<img src="${currentUser.avatarUrl}" onerror="this.parentElement.textContent='${initials}'">`;
+    else avatarEl.textContent = initials;
+    document.getElementById('header-username').textContent = currentUser.username;
+    loadProfilePage();
+    prefillSettings();
+  } catch(e) { showToast('Failed to load user', 'error'); }
+}
+
+// ── NAVIGATION ──
+function showPage(name) {
+  prevPage = document.querySelector('.page.active')?.id?.replace('page-','') || 'feed';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const navEl = document.getElementById('nav-'+name);
+  if (navEl) navEl.classList.add('active');
+
+  if (name === 'profile') loadProfilePage();
+  if (name === 'settings') prefillSettings();
+  if (name === 'search') {} // handled by search
+}
+
+function goBack() { showPage(prevPage || 'explore'); }
+
+// ── FEED ──
+async function loadFeed() {
+  const el = document.getElementById('feed-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading feed...</div>';
+  try {
+    const res = await fetch(API + '/api/posts/feed?page=0&size=20', { headers: getHeaders() });
+    const data = await res.json();
+    const posts = data.content || [];
+    if (posts.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">👗</div><h3>Your feed is empty</h3><p>Follow some people to see their outfits here.</p></div>';
+    } else {
+      el.innerHTML = posts.map(p => renderPostCard(p)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Failed to load feed</h3><p>Check your connection and try again.</p></div>'; }
+}
+
+// ── EXPLORE ──
+async function loadExplore() {
+  const el = document.getElementById('explore-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+  try {
+    const res = await fetch(API + '/api/posts?page=0&size=30', { headers: getHeaders() });
+    const data = await res.json();
+    const posts = data.content || [];
+    if (posts.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">✨</div><h3>No posts yet</h3><p>Be the first to share an outfit!</p></div>';
+    } else {
+      el.innerHTML = posts.map(p => renderPostCard(p)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Failed to load posts</h3></div>'; }
+}
+
+// ── PEOPLE ──
+async function loadPeople() {
+  const el = document.getElementById('people-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+  try {
+    const res = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    const me = await res.json();
+    // Get all posts to extract unique users
+    const postsRes = await fetch(API + '/api/posts?page=0&size=100', { headers: getHeaders() });
+    const postsData = await postsRes.json();
+    const posts = postsData.content || [];
+    const seen = new Set();
+    const users = [];
+    for (const p of posts) {
+      if (!seen.has(p.authorId) && p.authorId !== me.id) {
+        seen.add(p.authorId);
+        users.push({ id: p.authorId, username: p.authorUsername });
+      }
+    }
+    allUsers = users;
+    if (users.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>No other users found</h3><p>Create some posts to populate the community!</p></div>';
+    } else {
+      el.innerHTML = users.map(u => renderUserCard(u)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Failed to load people</h3></div>'; }
+}
+
+// ── RENDER POST CARD ──
+function renderPostCard(p) {
+  const isOwn = currentUser && p.authorId === currentUser.id;
+  const initials = p.authorUsername[0].toUpperCase();
+  const imgHTML = p.imageUrl
+    ? `<div class="post-img"><img src="${p.imageUrl}" alt="outfit" onerror="this.parentElement.innerHTML='<span>🧥</span>'; this.parentElement.style.fontSize='4rem'"></div>`
+    : `<div class="post-img placeholder">🧥</div>`;
+  const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+
+  return `
+  <div class="post-card" id="post-${p.id}">
+    ${imgHTML}
+    <div class="post-body">
+      <div class="post-author">
+        <div class="post-avatar" onclick="viewUser(${p.authorId})">${initials}</div>
+        <div class="post-author-info">
+          <div class="post-author-name" onclick="viewUser(${p.authorId})">@${p.authorUsername}</div>
+          <div class="post-date">${date}</div>
+        </div>
+      </div>
+      <p class="post-desc">${escHtml(p.description)}</p>
+      <div class="post-actions">
+        <button class="action-btn ${p.liked ? 'liked' : ''}" id="like-btn-${p.id}" onclick="toggleLike(${p.id}, this)">
+          <span class="like-icon"></span>
+          <span class="like-count">${p.likesCount}</span>
+        </button>
+        <button class="action-btn" onclick="toggleComments(${p.id})">
+          💬 <span>${p.commentsCount}</span>
+        </button>
+        ${isOwn ? `<button class="action-btn delete-btn" onclick="deletePost(${p.id})">🗑️</button>` : ''}
+      </div>
+      <div id="comments-${p.id}" style="display:none"></div>
+    </div>
+  </div>`;
+}
+
+// ── RENDER USER CARD ──
+function renderUserCard(u) {
+  const initials = u.username[0].toUpperCase();
+  return `
+  <div class="user-card" onclick="viewUser(${u.id})">
+    <div class="user-card-avatar">${initials}</div>
+    <div class="user-card-name">@${u.username}</div>
+    <div class="user-card-bio">${u.bio || 'Fashion lover'}</div>
+    <button class="follow-toggle not-following" id="follow-btn-${u.id}" onclick="event.stopPropagation(); toggleFollow(${u.id}, this)">Follow</button>
+  </div>`;
+}
+
+// ── LIKE ──
+async function toggleLike(postId, btn) {
+  const isLiked = btn.classList.contains('liked');
+  const countEl = btn.querySelector('.like-count');
+  const method = isLiked ? 'DELETE' : 'POST';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/like`, { method, headers: getHeaders() });
+    if (res.ok) {
+      btn.classList.toggle('liked', !isLiked);
+      countEl.textContent = parseInt(countEl.textContent) + (isLiked ? -1 : 1);
+    } else { showToast('Could not update like', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+// ── COMMENTS ──
+async function toggleComments(postId) {
+  const el = document.getElementById('comments-'+postId);
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/comments`, { headers: getHeaders() });
+    const comments = await res.json();
+    renderComments(postId, comments);
+  } catch(e) { el.innerHTML = '<p style="color:var(--error);font-size:0.875rem;padding:1rem">Failed to load comments</p>'; }
+}
+
+function renderComments(postId, comments) {
+  const el = document.getElementById('comments-'+postId);
+  const commentsHTML = comments.length === 0
+    ? '<p style="font-size:0.85rem;color:var(--muted);padding:0.5rem 0">No comments yet. Be the first!</p>'
+    : comments.map(c => `
+      <div class="comment-item">
+        <div class="post-avatar" style="font-size:0.75rem;width:28px;height:28px">${c.authorUsername[0].toUpperCase()}</div>
+        <div class="comment-body">
+          <div class="comment-author">@${c.authorUsername}</div>
+          <div class="comment-text">${escHtml(c.content)}</div>
+          <div class="comment-time">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</div>
+        </div>
+      </div>`).join('');
+
+  el.innerHTML = `
+    <div class="comments-panel">
+      <div class="comments-title">Comments</div>
+      ${commentsHTML}
+      <div class="comment-form">
+        <input class="comment-input" id="comment-input-${postId}" placeholder="Write a comment..." onkeydown="if(event.key==='Enter')postComment(${postId})">
+        <button class="comment-send" onclick="postComment(${postId})">Send</button>
+      </div>
+    </div>`;
+}
+
+async function postComment(postId) {
+  const input = document.getElementById('comment-input-'+postId);
+  const content = input.value.trim();
+  if (!content) return;
+  input.disabled = true;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/comments`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ content })
+    });
+    if (res.ok) {
+      input.value = '';
+      // Reload comments
+      const cRes = await fetch(API + `/api/posts/${postId}/comments`, { headers: getHeaders() });
+      const comments = await cRes.json();
+      renderComments(postId, comments);
+      showToast('Comment posted!', 'success');
+    } else { showToast('Failed to post comment', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { if (input) input.disabled = false; }
+}
+
+// ── DELETE POST ──
+async function deletePost(postId) {
+  if (!confirm('Delete this post?')) return;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}`, { method: 'DELETE', headers: getHeaders() });
+    if (res.ok) {
+      document.getElementById('post-'+postId)?.remove();
+      showToast('Post deleted', 'success');
+    } else { showToast('Failed to delete post', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+// ── CREATE POST ──
+function openCreateModal() { document.getElementById('create-modal').classList.add('open'); }
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.remove('open');
+  document.getElementById('create-desc').value = '';
+  document.getElementById('create-imageurl').value = '';
+  document.getElementById('img-preview').innerHTML = '<div class="img-placeholder"><div class="icon">📸</div><p>Paste an image URL below to preview</p></div>';
+  document.getElementById('create-alert').className = 'alert';
+}
+
+function previewImage(url) {
+  const el = document.getElementById('img-preview');
+  if (!url) { el.innerHTML = '<div class="img-placeholder"><div class="icon">📸</div><p>Paste an image URL below to preview</p></div>'; return; }
+  el.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'><div class=\\'icon\\'>❌</div><p>Invalid image URL</p></div>'">`;
+}
+
+async function doCreatePost() {
+  const description = document.getElementById('create-desc').value.trim();
+  const imageUrl = document.getElementById('create-imageurl').value.trim() || null;
+  if (!description) {
+    const a = document.getElementById('create-alert');
+    a.textContent = 'Please add a description.'; a.className = 'alert error'; return;
+  }
+  const btn = document.getElementById('create-post-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+  try {
+    const res = await fetch(API + '/api/posts', {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ description, imageUrl })
+    });
+    if (res.ok) {
+      closeCreateModal();
+      showToast('Outfit posted! 🎉', 'success');
+      loadFeed();
+      loadExplore();
+    } else {
+      const d = await res.json();
+      const a = document.getElementById('create-alert');
+      a.textContent = d.error || 'Failed to create post.'; a.className = 'alert error';
+    }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Post Outfit'; }
+}
+
+// ── FOLLOW ──
+async function toggleFollow(userId, btn) {
+  const isFollowing = btn.classList.contains('following');
+  const method = isFollowing ? 'DELETE' : 'POST';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + `/api/users/${userId}/follow`, { method, headers: getHeaders() });
+    if (res.ok) {
+      btn.classList.toggle('following', !isFollowing);
+      btn.classList.toggle('not-following', isFollowing);
+      btn.textContent = isFollowing ? 'Follow' : 'Following';
+      showToast(isFollowing ? 'Unfollowed' : 'Following!', 'success');
+      loadFeed();
+    } else {
+      const d = await res.json();
+      showToast(d.error || 'Action failed', 'error');
+    }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+// ── VIEW USER ──
+async function viewUser(userId) {
+  if (currentUser && userId === currentUser.id) { showPage('profile'); return; }
+  showPage('user');
+  const el = document.getElementById('user-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading profile...</div>';
+  try {
+    const [userRes, postsRes] = await Promise.all([
+      fetch(API + `/api/users/${userId}`, { headers: getHeaders() }),
+      fetch(API + `/api/posts/user/${(await fetch(API+`/api/users/${userId}`,{headers:getHeaders()})).ok ? (await fetch(API+`/api/users/${userId}`,{headers:getHeaders()})).json().then(u=>u.username).catch(()=>'') : ''}`, { headers: getHeaders() })
+    ]);
+
+    // Simpler approach: fetch user then posts by username
+    const userR = await fetch(API + `/api/users/${userId}`, { headers: getHeaders() });
+    const user = await userR.json();
+    const postsR = await fetch(API + `/api/posts/user/${user.username}`, { headers: getHeaders() });
+    const posts = await postsR.json();
+
+    const initials = user.username[0].toUpperCase();
+    el.innerHTML = `
+      <div class="profile-hero">
+        <div class="profile-top">
+          <div class="profile-pic">${initials}</div>
+          <div class="profile-info">
+            <div class="profile-username">@${user.username}</div>
+            <div class="profile-bio">${user.bio || 'No bio yet'}</div>
+            <div class="profile-stats">
+              <div class="pstat"><div class="pstat-num">${posts.length}</div><div class="pstat-label">Posts</div></div>
+              <div class="pstat"><div class="pstat-num">${user.followersCount}</div><div class="pstat-label">Followers</div></div>
+              <div class="pstat"><div class="pstat-num">${user.followingCount}</div><div class="pstat-label">Following</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-sm follow-toggle not-following" id="view-follow-btn" onclick="toggleFollow(${userId}, this)">Follow</button>
+        </div>
+      </div>
+      <div class="post-grid">${posts.length === 0 ? '<div class="empty-state"><div class="icon">👗</div><h3>No posts yet</h3></div>' : posts.map(p => renderPostCard(p)).join('')}</div>
+    `;
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Failed to load profile</h3></div>'; }
+}
+
+// ── MY PROFILE ──
+async function loadProfilePage() {
+  if (!currentUser) return;
+  const el = document.getElementById('profile-content');
+  const initials = currentUser.username[0].toUpperCase();
+  try {
+    const postsRes = await fetch(API + `/api/posts/user/${currentUser.username}`, { headers: getHeaders() });
+    const posts = await postsRes.json();
+    const meRes = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    const me = await meRes.json();
+    currentUser = me;
+
+    el.innerHTML = `
+      <div class="profile-hero">
+        <div class="profile-top">
+          <div class="profile-pic">${me.avatarUrl ? `<img src="${me.avatarUrl}" onerror="this.parentElement.textContent='${initials}'">` : initials}</div>
+          <div class="profile-info">
+            <div class="profile-username">@${me.username}</div>
+            <div class="profile-bio">${me.bio || 'No bio yet. Add one in Settings.'}</div>
+            <div class="profile-email">${me.email}</div>
+            <div class="profile-stats">
+              <div class="pstat"><div class="pstat-num">${posts.length}</div><div class="pstat-label">Posts</div></div>
+              <div class="pstat"><div class="pstat-num">${me.followersCount}</div><div class="pstat-label">Followers</div></div>
+              <div class="pstat"><div class="pstat-num">${me.followingCount}</div><div class="pstat-label">Following</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-sm btn-outline-sm" onclick="showPage('settings')">✏️ Edit Profile</button>
+          <button class="btn-sm btn-accent-sm" onclick="openCreateModal()">+ New Post</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active">My Outfits (${posts.length})</button>
+      </div>
+      <div class="post-grid">${posts.length === 0
+        ? '<div class="empty-state"><div class="icon">👗</div><h3>No posts yet</h3><p>Share your first outfit!</p><br><button class="btn-sm btn-accent-sm" onclick="openCreateModal()" style="margin-top:1rem">+ Create Post</button></div>'
+        : posts.map(p => renderPostCard(p)).join('')}
+      </div>`;
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Failed to load profile</h3></div>'; }
+}
+
+// ── SETTINGS ──
+function prefillSettings() {
+  if (!currentUser) return;
+  document.getElementById('settings-bio').value = currentUser.bio || '';
+  document.getElementById('settings-avatar').value = currentUser.avatarUrl || '';
+}
+
+async function saveProfile() {
+  const bio = document.getElementById('settings-bio').value.trim();
+  const avatarUrl = document.getElementById('settings-avatar').value.trim() || null;
+  const alertEl = document.getElementById('settings-alert');
+  try {
+    const res = await fetch(API + '/api/users/profile', {
+      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ bio, avatarUrl })
+    });
+    if (res.ok) {
+      currentUser = await res.json();
+      alertEl.textContent = 'Profile updated!'; alertEl.className = 'alert success';
+      loadProfilePage();
+      showToast('Profile updated!', 'success');
+    } else {
+      const d = await res.json();
+      alertEl.textContent = d.error || 'Failed to update.'; alertEl.className = 'alert error';
+    }
+  } catch(e) { alertEl.textContent = 'Network error.'; alertEl.className = 'alert error'; }
+}
+
+// ── SEARCH ──
+let searchTimer;
+function searchUsers(query) {
+  clearTimeout(searchTimer);
+  if (!query.trim()) return;
+  searchTimer = setTimeout(async () => {
+    showPage('search');
+    const el = document.getElementById('search-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+      const postsRes = await fetch(API + '/api/posts?page=0&size=100', { headers: getHeaders() });
+      const data = await postsRes.json();
+      const posts = data.content || [];
+      const seen = new Set(); const users = [];
+      for (const p of posts) {
+        if (!seen.has(p.authorId) && p.authorUsername.toLowerCase().includes(query.toLowerCase())) {
+          seen.add(p.authorId);
+          users.push({ id: p.authorId, username: p.authorUsername });
+        }
+      }
+      if (users.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><h3>No users found</h3><p>Try a different search term.</p></div>';
+      } else {
+        el.innerHTML = users.map(u => renderUserCard(u)).join('');
+      }
+    } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Search failed</h3></div>'; }
+  }, 400);
+}
+
+// ── UTILS ──
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = '/';
+}
+
+// Close modal on overlay click
+document.getElementById('create-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateModal();
+});
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
