@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopLook — Share Your Style</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0d0d0d; --paper: #f5f0e8; --cream: #ede8dc;
+    --accent: #c8a96e; --accent-dark: #a08040; --muted: #7a7060;
+    --error: #c0392b; --success: #27ae60; --white: #ffffff;
+  }
+  html, body { height: 100%; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+  .left-panel { width: 55%; background: var(--ink); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 3rem; }
+  .grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; }
+  .left-content { position: relative; z-index: 1; }
+  .brand { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: var(--accent); letter-spacing: -0.02em; }
+  .brand span { color: var(--white); }
+  .hero-section { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 4rem 0; }
+  .hero-label { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; }
+  .hero-title { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 4vw, 4.2rem); font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 1.5rem; }
+  .hero-title em { font-style: italic; color: var(--accent); }
+  .hero-desc { font-size: 1rem; font-weight: 300; line-height: 1.7; color: rgba(255,255,255,0.45); max-width: 360px; }
+  .left-footer { position: relative; z-index: 1; display: flex; gap: 2rem; }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .right-panel { width: 45%; display: flex; align-items: center; justify-content: center; padding: 3rem 4rem; background: var(--paper); }
+  .auth-box { width: 100%; max-width: 380px; animation: fadeUp 0.5s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  .tab-switch { display: flex; background: var(--cream); border-radius: 12px; padding: 4px; margin-bottom: 2.5rem; }
+  .tab-btn { flex: 1; padding: 0.65rem; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; color: var(--muted); border-radius: 9px; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { background: var(--white); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+  .form-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .form-sub { font-size: 0.875rem; color: var(--muted); margin-bottom: 2rem; font-weight: 300; }
+
+  .field { margin-bottom: 1.2rem; }
+  .field label { display: block; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; }
+  .field input { width: 100%; padding: 0.85rem 1rem; background: var(--cream); border: 1.5px solid transparent; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--ink); outline: none; transition: all 0.2s; }
+  .field input:focus { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px rgba(200,169,110,0.15); }
+
+  .btn-primary { width: 100%; padding: 0.95rem; background: var(--accent); color: var(--ink); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--accent-dark); color: var(--white); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,169,110,0.35); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .alert { padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.875rem; margin-bottom: 1.2rem; display: none; }
+  .alert.error { background: #fdf0ef; color: var(--error); border: 1px solid #f5c6c2; display: block; }
+  .alert.success { background: #edfaf3; color: var(--success); border: 1px solid #b7e9cb; display: block; }
+
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(0,0,0,0.25); border-top-color: var(--ink); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .left-panel { width: 100%; min-height: 38vh; padding: 2rem; }
+    .right-panel { width: 100%; padding: 2rem; }
+    .hero-title { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="left-panel">
+  <div class="grain"></div>
+  <div class="left-content"><div class="brand">Top<span>Look</span></div></div>
+  <div class="hero-section">
+    <p class="hero-label">Social Fashion Platform</p>
+    <h1 class="hero-title">Wear it.<br>Share it.<br><em>Own it.</em></h1>
+    <p class="hero-desc">The platform where style meets community. Share your outfits, discover new looks, and connect with fashion lovers worldwide.</p>
+  </div>
+  <div class="left-footer">
+    <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Outfits</div></div>
+    <div class="stat"><div class="stat-num">5K+</div><div class="stat-label">Members</div></div>
+    <div class="stat"><div class="stat-num">50K+</div><div class="stat-label">Likes</div></div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="auth-box">
+    <div class="tab-switch">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <div class="form-panel active" id="panel-login">
+      <h2 class="form-title">Welcome back</h2>
+      <p class="form-sub">Sign in to your TopLook account</p>
+      <div class="alert" id="login-alert"></div>
+      <div class="field"><label>Username</label><input type="text" id="login-username" placeholder="your_username"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <div class="form-panel" id="panel-register">
+      <h2 class="form-title">Join TopLook</h2>
+      <p class="form-sub">Create your fashion profile today</p>
+      <div class="alert" id="register-alert"></div>
+      <div class="field"><label>Username</label><input type="text" id="reg-username" placeholder="your_username"></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 6 characters"></div>
+      <button class="btn-primary" id="register-btn" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-'+tab).classList.add('active');
+  }
+
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'alert ' + type;
+  }
+
+  function setLoading(btnId, loading, label) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading ? '<span class="spinner"></span>Please wait...' : label;
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!username || !password) { showAlert('login-alert','Please fill in all fields.','error'); return; }
+    setLoading('login-btn', true, 'Sign In');
+    try {
+      const res = await fetch(API+'/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,password}) });
+      const data = await res.json();
+      if (!res.ok) { showAlert('login-alert', data.error||'Invalid credentials.','error'); return; }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('username', data.username);
+      window.location.href = '/dashboard.html';
+    } catch(e) { showAlert('login-alert','Server unavailable. Is the backend running?','error'); }
+    finally { setLoading('login-btn', false, 'Sign In'); }
+  }
+
+  async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!username||!email||!password) { showAlert('register-alert','Please fill in all fields.','error'); return; }
+    if (password.length < 6) { showAlert('register-alert','Password must be at least 6 characters.','error'); return; }
+    setLoading('register-btn', true, 'Create Account');
+    try {
+      const res = await fetch(API+'/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,email,password}) });
+      const data = await res.json();
+      if (!res.ok) { showAlert('register-alert', data.error||'Registration failed.','error'); return; }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('username', data.username);
+      window.location.href = '/dashboard.html';
+    } catch(e) { showAlert('register-alert','Server unavailable. Is the backend running?','error'); }
+    finally { setLoading('register-btn', false, 'Create Account'); }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key==='Enter') {
+      const active = document.querySelector('.form-panel.active');
+      if (active.id==='panel-login') doLogin(); else doRegister();
+    }
+  });
+
+  if (localStorage.getItem('token')) window.location.href = '/dashboard.html';
+</script>
+</body>
+</html>
