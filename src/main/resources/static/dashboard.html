@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopLook — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface2: #f3f3f3;
+  --ink: #111111;
+  --ink2: #555555;
+  --ink3: #999999;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --rose: #e8605a;
+  --rose-light: #fff0ef;
+  --gold: #c9a84c;
+  --gold-light: #fdf8ee;
+  --sidebar-w: 240px;
+  --sidebar-collapsed-w: 10px;
+  --header-h: 60px;
+  --radius: 12px;
+  --radius-lg: 20px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+.header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 1.5rem;
+  z-index: 100; gap: 1rem;
+}
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem; font-weight: 600;
+  color: var(--ink); margin-right: auto;
+  letter-spacing: -0.02em; white-space: nowrap;
+}
+.brand em { color: var(--rose); font-style: normal; }
+
+.header-search {
+  flex: 1; max-width: 320px; position: relative;
+}
+.header-search input {
+  width: 100%; padding: 0.55rem 1rem 0.55rem 2.4rem;
+  background: var(--surface2);
+  border: 1px solid transparent;
+  border-radius: 100px;
+  color: var(--ink); font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem; outline: none;
+  transition: all 0.2s;
+}
+.header-search input::placeholder { color: var(--ink3); }
+.header-search input:focus {
+  background: var(--surface);
+  border-color: var(--border2);
+  box-shadow: 0 0 0 3px rgba(232,96,90,0.1);
+}
+.search-icon {
+  position: absolute; left: 0.8rem; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem; pointer-events: none;
+  opacity: 0.4;
+}
+
+.header-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+.header-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.8rem; color: #fff;
+  cursor: pointer; overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1.5px var(--border2);
+  transition: box-shadow 0.2s;
+}
+.header-avatar:hover { box-shadow: 0 0 0 2px var(--rose); }
+.header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.header-username { color: var(--ink2); font-size: 0.82rem; font-weight: 500; }
+
+.layout { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  position: fixed; left: 0; top: var(--header-h); bottom: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.25rem 0.75rem;
+  overflow-y: auto; z-index: 50;
+  display: flex; flex-direction: column; gap: 0.15rem;
+  transform: translateX(calc(-1 * var(--sidebar-w) + var(--sidebar-collapsed-w)));
+  opacity: 0.12;
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
+}
+
+.sidebar:hover, .sidebar:focus-within {
+  transform: translateX(0);
+  opacity: 1;
+  box-shadow: 16px 0 45px rgba(0,0,0,0.08);
+}
+
+.sidebar::after {
+  content: '';
+  position: fixed;
+  right: -8px;
+  top: 0; bottom: 0;
+  width: 8px;
+}
+
+.create-btn {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%; padding: 0.75rem 1rem;
+  background: var(--ink); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 0.75rem;
+  letter-spacing: 0.02em;
+}
+.create-btn:hover { background: #222; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+
+.nav-label {
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink3);
+  padding: 0.75rem 0.75rem 0.35rem;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem 0.75rem; border-radius: var(--radius);
+  cursor: pointer; font-size: 0.875rem; font-weight: 400;
+  color: var(--ink2); transition: all 0.15s;
+  text-decoration: none; width: 100%; border: none; background: none; text-align: left;
+}
+.nav-item:hover { background: var(--surface2); color: var(--ink); }
+.nav-item.active {
+  background: var(--rose-light); color: var(--rose); font-weight: 600;
+}
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+.nav-divider { height: 1px; background: var(--border); margin: 0.5rem 0; }
+
+.main {
+  margin-left: var(--sidebar-collapsed-w); flex: 1;
+  padding: 2rem 2.5rem;
+  max-width: calc(100% - var(--sidebar-collapsed-w));
+  transition: margin-left 0.25s ease, max-width 0.25s ease;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { margin-bottom: 2rem; }
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem; font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+.page-sub { font-size: 0.85rem; color: var(--ink3); font-weight: 300; }
+
+.post-grid {
+  columns: 3 280px; column-gap: 1rem;
+}
+.post-card {
+  break-inside: avoid;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+  position: relative;
+}
+.post-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+
+`.post-img {
+  width: 100%; display: block; background: var(--surface2);
+  position: relative; overflow: hidden;
+}
+.post-img img {
+  width: 100%; display: block; object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.post-card:hover .post-img img { transform: scale(1.04); }
+.post-img.placeholder {
+  height: 240px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+  background: linear-gradient(145deg, #f5f5f5 0%, #ececec 100%);
+}
+
+.post-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.post-card:hover .post-overlay { opacity: 1; }
+
+.post-body { padding: 0.9rem 1rem; }
+
+.post-author { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.65rem; }
+.post-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #e8605a, #c9a84c);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: #fff;
+  flex-shrink: 0; overflow: hidden; cursor: pointer;
+}
+.post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.post-author-info { flex: 1; min-width: 0; }
+.post-author-name {
+  font-size: 0.8rem; font-weight: 600; color: var(--ink);
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.post-author-name:hover { color: var(--rose); }
+.post-date { font-size: 0.7rem; color: var(--ink3); }
+
+.post-desc {
+  font-size: 0.86rem; line-height: 1.6; color: var(--ink2);
+  margin-bottom: 0.85rem;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.post-actions {
+  display: flex; gap: 0.5rem; align-items: center;
+  padding-top: 0.65rem; border-top: 1px solid var(--border);
+}
+.action-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  background: none; border: none; cursor: pointer;
+  font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+  color: var(--ink3); padding: 0.3rem 0.5rem; border-radius: 8px;
+  transition: all 0.15s;
+}
+.action-btn:hover { background: var(--surface2); color: var(--ink); }
+.action-btn.liked { color: var(--rose); }
+.action-btn.liked .like-icon::before { content: '♥'; }
+.like-icon::before { content: '♡'; font-size: 1rem; }
+.delete-btn { margin-left: auto; }
+.delete-btn:hover { color: var(--rose); }
+
+
+.category-bar {
+  display: flex; flex-wrap: wrap; gap: 0.55rem; margin: -0.7rem 0 1.3rem;
+}
+.category-chip {
+  padding: 0.48rem 0.85rem; border-radius: 999px; border: 1px solid var(--border2);
+  background: var(--surface); color: var(--ink2); cursor: pointer; font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem; transition: all 0.16s;
+}
+.category-chip:hover, .category-chip.active {
+  background: var(--rose); border-color: var(--rose); color: #fff;
+}
+.post-category {
+  display: inline-flex; align-items: center; width: fit-content;
+  padding: 0.22rem 0.55rem; border-radius: 999px; background: var(--gold-light); color: #8a6f22;
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.55rem;
+}
+
+.profile-hero {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); padding: 2.5rem;
+  margin-bottom: 2rem;
+  background-image: radial-gradient(ellipse at top right, rgba(232,96,90,0.05) 0%, transparent 60%);
+}
+.profile-top { display: flex; align-items: flex-start; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.profile-pic {
+  width: 90px; height: 90px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 600;
+  color: #fff; flex-shrink: 0; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(232,96,90,0.25);
+}
+.profile-pic img { width: 100%; height: 100%; object-fit: cover; }
+.profile-info { flex: 1; }
+.profile-username {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; font-weight: 600;
+  letter-spacing: -0.01em; line-height: 1.1;
+}
+.profile-bio { color: var(--ink2); font-size: 0.875rem; margin-top: 0.4rem; font-weight: 300; }
+.profile-email { font-size: 0.78rem; color: var(--ink3); margin-top: 0.25rem; }
+.profile-stats { display: flex; gap: 2rem; margin-top: 1.25rem; }
+.pstat { }
+.pstat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-weight: 600; line-height: 1;
+}
+.pstat-label { font-size: 0.7rem; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.1rem; }
+.profile-actions { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+
+.btn-sm {
+  padding: 0.5rem 1.1rem; border-radius: 100px;
+  font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: all 0.18s; border: 1.5px solid; letter-spacing: 0.02em;
+}
+.btn-primary-sm { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-primary-sm:hover { background: #222; }
+.btn-outline-sm { background: transparent; color: var(--ink); border-color: var(--border2); }
+.btn-outline-sm:hover { border-color: var(--ink); }
+.btn-accent-sm { background: var(--rose); color: #fff; border-color: var(--rose); }
+.btn-accent-sm:hover { background: #d04843; box-shadow: 0 4px 12px rgba(232,96,90,0.35); }
+.btn-danger-sm { background: transparent; color: var(--rose); border-color: var(--rose); }
+.btn-danger-sm:hover { background: var(--rose); color: #fff; }
+
+.edit-section {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 1.5rem;
+}
+.edit-section h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 600; margin-bottom: 1.25rem;
+}
+.field { margin-bottom: 1.1rem; }
+.field label {
+  display: block; font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 0.4rem;
+}
+.field input, .field textarea {
+  width: 100%; padding: 0.75rem 1rem;
+  background: var(--surface2); border: 1.5px solid transparent;
+  border-radius: var(--radius); font-family: 'Outfit', sans-serif;
+  font-size: 0.875rem; color: var(--ink); outline: none;
+  transition: all 0.2s; resize: vertical;
+}
+.field input:focus, .field textarea:focus {
+  border-color: var(--rose); background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(232,96,90,0.12);
+}
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; animation: fadeUp 0.2s ease; }
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 1.75rem; width: 100%; max-width: 460px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600;
+}
+.modal-close {
+  background: var(--surface2); border: none; width: 30px; height: 30px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; cursor: pointer; color: var(--ink2); transition: background 0.15s;
+}
+.modal-close:hover { background: var(--border); }
+
+.img-preview {
+  width: 100%; height: 220px; background: var(--surface2);
+  border-radius: var(--radius); border: 2px dashed var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1rem; overflow: hidden; position: relative;
+}
+.img-preview img { width: 100%; height: 100%; object-fit: cover; }
+.img-placeholder { text-align: center; color: var(--ink3); }
+.img-placeholder .icon { font-size: 2rem; margin-bottom: 0.4rem; opacity: 0.5; }
+.img-placeholder p { font-size: 0.78rem; }
+
+.comments-panel {
+  background: var(--surface); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 1.1rem; margin-top: 0.75rem;
+}
+.comments-title { font-weight: 600; margin-bottom: 0.85rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink3); }
+.comment-item { display: flex; gap: 0.6rem; margin-bottom: 0.85rem; }
+.comment-body {
+  flex: 1; background: var(--surface2); border-radius: var(--radius); padding: 0.65rem 0.85rem;
+}
+.comment-author { font-size: 0.76rem; font-weight: 600; margin-bottom: 0.2rem; }
+.comment-text { font-size: 0.82rem; line-height: 1.5; }
+.comment-time { font-size: 0.68rem; color: var(--ink3); margin-top: 0.2rem; }
+.comment-form { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.comment-input {
+  flex: 1; padding: 0.6rem 0.9rem;
+  background: var(--surface2); border: 1.5px solid transparent;
+  border-radius: 100px; font-family: 'Outfit', sans-serif; font-size: 0.82rem;
+  outline: none; transition: all 0.2s; color: var(--ink);
+}
+.comment-input:focus { border-color: var(--rose); background: var(--surface); }
+.comment-send {
+  padding: 0.6rem 1.1rem; background: var(--rose); color: #fff;
+  border: none; border-radius: 100px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+  white-space: nowrap; transition: background 0.15s;
+}
+.comment-send:hover { background: #d04843; }
+
+.users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.user-card {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); padding: 1.5rem 1.25rem; text-align: center;
+  cursor: pointer; transition: all 0.22s;
+}
+.user-card:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(0,0,0,0.09); border-color: transparent; }
+.user-card-avatar {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 600; color: #fff;
+  margin: 0 auto 0.75rem; font-family: 'Cormorant Garamond', serif;
+}
+.user-card-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.user-card-bio { font-size: 0.76rem; color: var(--ink3); margin-bottom: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.follow-toggle {
+  width: 100%; padding: 0.5rem; border-radius: 100px; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.18s; border: 1.5px solid;
+  letter-spacing: 0.02em;
+}
+.follow-toggle.following { background: var(--ink); color: #fff; border-color: var(--ink); }
+.follow-toggle.not-following { background: transparent; color: var(--rose); border-color: var(--rose); }
+.follow-toggle.not-following:hover { background: var(--rose); color: #fff; }
+
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--ink); color: #fff;
+  padding: 0.8rem 1.25rem; border-radius: 100px;
+  font-size: 0.82rem; font-weight: 500; z-index: 300;
+  transform: translateY(80px); opacity: 0; transition: all 0.3s;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success::before { content: '✓'; color: #4ade80; font-weight: 700; }
+.toast.error::before { content: '!'; color: var(--rose); font-weight: 700; background: rgba(232,96,90,0.2); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  padding: 5rem; color: var(--ink3); gap: 0.75rem; flex-direction: column;
+}
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border); border-top-color: var(--rose);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  text-align: center; padding: 5rem 2rem; color: var(--ink3);
+}
+.empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.4; }
+.empty-state h3 { font-size: 1.05rem; font-weight: 600; color: var(--ink2); margin-bottom: 0.4rem; }
+.empty-state p { font-size: 0.82rem; }
+
+.alert {
+  padding: 0.8rem 1rem; border-radius: var(--radius); font-size: 0.82rem;
+  margin-bottom: 1.2rem; display: none;
+}
+.alert.error { background: var(--rose-light); color: #c0392b; border: 1px solid rgba(232,96,90,0.3); display: block; }
+.alert.success { background: #edfaf3; color: #1a7a45; border: 1px solid #b7e9cb; display: block; }
+
+.back-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; color: var(--ink3); cursor: pointer;
+  margin-bottom: 1.5rem; background: none; border: none; font-family: 'Outfit', sans-serif;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--ink); }
+
+.tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+.tab {
+  padding: 0.65rem 1.1rem; background: none; border: none;
+  font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 500;
+  color: var(--ink3); cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.15s;
+}
+.tab.active { color: var(--rose); border-bottom-color: var(--rose); font-weight: 600; }
+.tab:hover { color: var(--ink); }
+
+@media (max-width: 900px) {
+  :root { --sidebar-w: 68px; }
+  .nav-label, .nav-item span:not(.nav-icon), .header-username, .create-btn span { display: none; }
+  .create-btn { padding: 0.75rem; justify-content: center; }
+  .sidebar { padding: 1rem 0.5rem; transform: translateX(0); opacity: 1; }
+  .nav-item { justify-content: center; padding: 0.75rem; }
+  .nav-icon { font-size: 1.2rem; width: auto; }
+  .main { padding: 1.5rem; }
+  .post-grid { columns: 2 200px; }
+}
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; max-width: 100%; padding: 1rem; }
+  .post-grid { columns: 1; }
+  .header-search { max-width: 200px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">Top<em>Look</em></div>
+  <div class="header-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="search-input" placeholder="Search users..." oninput="searchUsers(this.value)">
+  </div>
+  <div class="header-actions">
+    <div class="header-avatar" id="header-avatar" onclick="showPage('profile')"></div>
+    <span class="header-username" id="header-username">Loading…</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <button class="create-btn" onclick="openCreateModal()">
+      <span>+</span><span> New Look</span>
+    </button>
+
+    <div class="nav-label">Explore</div>
+    <button class="nav-item active" id="nav-feed" onclick="showPage('feed')">
+      <span class="nav-icon">⌂</span> <span>Feed</span>
+    </button>
+    <button class="nav-item" id="nav-explore" onclick="showPage('explore')">
+      <span class="nav-icon">◈</span> <span>Explore</span>
+    </button>
+    <button class="nav-item" id="nav-people" onclick="showPage('people')">
+      <span class="nav-icon">⊕</span> <span>People</span>
+    </button>
+
+    <div class="nav-divider"></div>
+    <div class="nav-label">Me</div>
+    <button class="nav-item" id="nav-profile" onclick="showPage('profile')">
+      <span class="nav-icon">◉</span> <span>Profile</span>
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="showPage('settings')">
+      <span class="nav-icon">⚙</span> <span>Settings</span>
+    </button>
+    <button class="nav-item" onclick="logout()" style="color: var(--rose);">
+      <span class="nav-icon">↩</span> <span>Logout</span>
+    </button>
+  </aside>
+
+  <main class="main">
+
+    <div class="page active" id="page-feed">
+      <div class="page-header">
+        <h1 class="page-title">Your Feed</h1>
+        <p class="page-sub">Latest looks from people you follow</p>
+      </div>
+      <div id="feed-content" class="post-grid"></div>
+    </div>
+
+    <div class="page" id="page-explore">
+      <div class="page-header">
+        <h1 class="page-title">Explore</h1>
+        <p class="page-sub">Discover looks from the whole community</p>
+      </div>
+      <div id="category-bar" class="category-bar"></div>
+      <div id="explore-content" class="post-grid"></div>
+    </div>
+
+    <div class="page" id="page-people">
+      <div class="page-header">
+        <h1 class="page-title">People</h1>
+        <p class="page-sub">Find and follow fashion lovers</p>
+      </div>
+      <div id="people-content" class="users-grid"></div>
+    </div>
+
+    <div class="page" id="page-profile">
+      <div id="profile-content"></div>
+    </div>
+
+    <div class="page" id="page-user">
+      <button class="back-btn" onclick="goBack()">← Back</button>
+      <div id="user-content"></div>
+    </div>
+
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-sub">Update your profile information</p>
+      </div>
+      <div class="edit-section">
+        <h3>Edit Profile</h3>
+        <div class="alert" id="settings-alert"></div>
+        <div class="field"><label>Bio</label><textarea id="settings-bio" rows="3" placeholder="Tell us about your style…"></textarea></div>
+        <div class="field"><label>Avatar URL</label><input type="url" id="settings-avatar" placeholder="https://example.com/photo.jpg"></div>
+        <button class="btn-sm btn-accent-sm" onclick="saveProfile()" style="width:100%; padding:0.8rem; border-radius: 12px;">Save Changes</button>
+      </div>
+    </div>
+
+    <div class="page" id="page-search">
+      <div class="page-header">
+        <h1 class="page-title">Search Results</h1>
+      </div>
+      <div id="search-content" class="users-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Share Your Look</span>
+      <button class="modal-close" onclick="closeCreateModal()">×</button>
+    </div>
+    <div class="alert" id="create-alert"></div>
+    <div class="img-preview" id="img-preview">
+      <div class="img-placeholder">
+        <div class="icon">📸</div>
+        <p>Paste an image URL below to preview</p>
+      </div>
+    </div>
+    <div class="field"><label>Image URL (optional)</label><input type="url" id="create-imageurl" placeholder="https://…" oninput="previewImage(this.value)"></div>
+    <div class="field"><label>Category</label>
+      <select id="create-category" style="width:100%;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid transparent;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.875rem;outline:none;color:var(--ink);">
+        <option>General</option><option>Casual</option><option>Streetwear</option><option>Business</option><option>Sport</option><option>Evening</option><option>Traditional</option>
+      </select>
+    </div>
+    <div class="field"><label>Description</label><textarea id="create-desc" rows="4" placeholder="Outfit details, brands, occasion…" style="width:100%;padding:0.75rem 1rem;background:var(--surface2);border:1.5px solid transparent;border-radius:var(--radius);font-family:'Outfit',sans-serif;font-size:0.875rem;outline:none;resize:vertical;color:var(--ink);transition:all 0.2s;"></textarea></div>
+    <button class="btn-sm btn-accent-sm" id="create-post-btn" onclick="doCreatePost()" style="width:100%; padding:0.85rem; border-radius: 12px; font-size:0.9rem;">Post Look</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let currentUser = null;
+let prevPage = 'feed';
+let commentsOpen = {};
+let allUsers = [];
+let selectedCategory = 'All';
+const defaultCategories = ['All','General','Casual','Streetwear','Business','Sport','Evening','Traditional'];
+
+function init() {
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.href = '/'; return; }
+  loadCurrentUser();
+  loadFeed();
+  loadCategories();
+  loadExplore();
+  loadPeople();
+}
+
+function getHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') };
+}
+
+async function loadCurrentUser() {
+  try {
+    const res = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    if (res.status === 401) { logout(); return; }
+    currentUser = await res.json();
+    const initials = currentUser.username[0].toUpperCase();
+    const avatarEl = document.getElementById('header-avatar');
+    if (currentUser.avatarUrl) avatarEl.innerHTML = `<img src="${currentUser.avatarUrl}" onerror="this.parentElement.textContent='${initials}'">`;
+    else avatarEl.textContent = initials;
+    document.getElementById('header-username').textContent = currentUser.username;
+    loadProfilePage();
+    prefillSettings();
+  } catch(e) { showToast('Failed to load user', 'error'); }
+}
+
+function showPage(name) {
+  prevPage = document.querySelector('.page.active')?.id?.replace('page-','') || 'feed';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const navEl = document.getElementById('nav-'+name);
+  if (navEl) navEl.classList.add('active');
+  if (name === 'profile') loadProfilePage();
+  if (name === 'settings') prefillSettings();
+}
+
+function goBack() { showPage(prevPage || 'explore'); }
+
+async function loadFeed() {
+  const el = document.getElementById('feed-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(API + '/api/posts/feed?page=0&size=20', { headers: getHeaders() });
+    const data = await res.json();
+    const posts = data.content || [];
+    if (posts.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">👗</div><h3>Your feed is empty</h3><p>Follow some people to see their looks here.</p></div>';
+    } else {
+      el.innerHTML = posts.map(p => renderPostCard(p)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Failed to load feed</h3><p>Check your connection and try again.</p></div>'; }
+}
+
+async function loadCategories() {
+  try {
+    const res = await fetch(API + '/api/posts/categories', { headers: getHeaders() });
+    const serverCategories = res.ok ? await res.json() : [];
+    const categories = [...new Set([...defaultCategories, ...serverCategories.filter(Boolean)])];
+    renderCategoryBar(categories);
+  } catch(e) {
+    renderCategoryBar(defaultCategories);
+  }
+}
+
+function renderCategoryBar(categories) {
+  const el = document.getElementById('category-bar');
+  if (!el) return;
+  el.innerHTML = categories.map(c =>
+    `<button class="category-chip ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${escAttr(c)}')">${escHtml(c)}</button>`
+  ).join('');
+}
+
+function selectCategory(category) {
+  selectedCategory = category;
+  document.querySelectorAll('.category-chip').forEach(chip => chip.classList.toggle('active', chip.textContent === category));
+  loadExplore();
+}
+
+async function loadExplore() {
+  const el = document.getElementById('explore-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const categoryParam = selectedCategory && selectedCategory !== 'All' ? '&category=' + encodeURIComponent(selectedCategory) : '';
+    const res = await fetch(API + '/api/posts?page=0&size=30' + categoryParam, { headers: getHeaders() });
+    const data = await res.json();
+    const posts = data.content || [];
+    if (posts.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">✦</div><h3>No posts in this category</h3><p>Choose another category or create a new look.</p></div>';
+    } else {
+      el.innerHTML = posts.map(p => renderPostCard(p)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Failed to load posts</h3></div>'; }
+}
+
+async function loadPeople() {
+  const el = document.getElementById('people-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    const me = await res.json();
+    const postsRes = await fetch(API + '/api/posts?page=0&size=100', { headers: getHeaders() });
+    const postsData = await postsRes.json();
+    const posts = postsData.content || [];
+    const seen = new Set(); const users = [];
+    for (const p of posts) {
+      if (!seen.has(p.authorId) && p.authorId !== me.id) {
+        seen.add(p.authorId);
+        users.push({ id: p.authorId, username: p.authorUsername });
+      }
+    }
+    allUsers = users;
+    if (users.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>No other users found</h3><p>Create some posts to populate the community!</p></div>';
+    } else {
+      el.innerHTML = users.map(u => renderUserCard(u)).join('');
+    }
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Failed to load people</h3></div>'; }
+}
+
+function renderPostCard(p) {
+  const isOwn = currentUser && p.authorId === currentUser.id;
+  const initials = p.authorUsername[0].toUpperCase();
+  const imgHTML = p.imageUrl
+    ? `<div class="post-img"><img src="${p.imageUrl}" alt="outfit" onerror="this.parentElement.classList.add('placeholder'); this.parentElement.innerHTML='🧥'"><div class="post-overlay"></div></div>`
+    : `<div class="post-img placeholder">🧥</div>`;
+  const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+
+  return `
+  <div class="post-card" id="post-${p.id}">
+    ${imgHTML}
+    <div class="post-body">
+      <div class="post-author">
+        <div class="post-avatar" onclick="viewUser(${p.authorId})">${initials}</div>
+        <div class="post-author-info">
+          <div class="post-author-name" onclick="viewUser(${p.authorId})">@${p.authorUsername}</div>
+          <div class="post-date">${date}</div>
+        </div>
+      </div>
+      <div class="post-category">${escHtml(p.category || 'General')}</div>
+      <p class="post-desc">${escHtml(p.description)}</p>
+      <div class="post-actions">
+        <button class="action-btn ${p.liked ? 'liked' : ''}" id="like-btn-${p.id}" onclick="toggleLike(${p.id}, this)">
+          <span class="like-icon"></span>
+          <span class="like-count">${p.likesCount}</span>
+        </button>
+        <button class="action-btn" onclick="toggleComments(${p.id})">
+          ◎ <span>${p.commentsCount}</span>
+        </button>
+        ${isOwn ? `<button class="action-btn delete-btn" onclick="deletePost(${p.id})">⊗</button>` : ''}
+      </div>
+      <div id="comments-${p.id}" style="display:none"></div>
+    </div>
+  </div>`;
+}
+
+function renderUserCard(u) {
+  const initials = u.username[0].toUpperCase();
+  return `
+  <div class="user-card" onclick="viewUser(${u.id})">
+    <div class="user-card-avatar">${initials}</div>
+    <div class="user-card-name">@${u.username}</div>
+    <div class="user-card-bio">${u.bio || 'Fashion lover'}</div>
+    <button class="follow-toggle not-following" id="follow-btn-${u.id}" onclick="event.stopPropagation(); toggleFollow(${u.id}, this)">Follow</button>
+  </div>`;
+}
+
+async function toggleLike(postId, btn) {
+  const isLiked = btn.classList.contains('liked');
+  const countEl = btn.querySelector('.like-count');
+  const method = isLiked ? 'DELETE' : 'POST';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/like`, { method, headers: getHeaders() });
+    if (res.ok) {
+      btn.classList.toggle('liked', !isLiked);
+      countEl.textContent = parseInt(countEl.textContent) + (isLiked ? -1 : 1);
+    } else { showToast('Could not update like', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+async function toggleComments(postId) {
+  const el = document.getElementById('comments-'+postId);
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading" style="padding:1rem"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/comments`, { headers: getHeaders() });
+    const comments = await res.json();
+    renderComments(postId, comments);
+  } catch(e) { el.innerHTML = '<p style="color:var(--rose);font-size:0.82rem;padding:0.75rem">Failed to load comments</p>'; }
+}
+
+function renderComments(postId, comments) {
+  const el = document.getElementById('comments-'+postId);
+  const commentsHTML = comments.length === 0
+    ? '<p style="font-size:0.8rem;color:var(--ink3);padding:0.5rem 0">No comments yet.</p>'
+    : comments.map(c => `
+      <div class="comment-item">
+        <div class="post-avatar" style="font-size:0.65rem;width:26px;height:26px;flex-shrink:0">${c.authorUsername[0].toUpperCase()}</div>
+        <div class="comment-body">
+          <div class="comment-author">@${c.authorUsername}</div>
+          <div class="comment-text">${escHtml(c.content)}</div>
+          <div class="comment-time">${c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</div>
+        </div>
+      </div>`).join('');
+
+  el.innerHTML = `
+    <div class="comments-panel">
+      <div class="comments-title">Comments</div>
+      ${commentsHTML}
+      <div class="comment-form">
+        <input class="comment-input" id="comment-input-${postId}" placeholder="Write a comment…" onkeydown="if(event.key==='Enter')postComment(${postId})">
+        <button class="comment-send" onclick="postComment(${postId})">Send</button>
+      </div>
+    </div>`;
+}
+
+async function postComment(postId) {
+  const input = document.getElementById('comment-input-'+postId);
+  const content = input.value.trim();
+  if (!content) return;
+  input.disabled = true;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}/comments`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ content })
+    });
+    if (res.ok) {
+      input.value = '';
+      const cRes = await fetch(API + `/api/posts/${postId}/comments`, { headers: getHeaders() });
+      const comments = await cRes.json();
+      renderComments(postId, comments);
+      showToast('Comment posted!', 'success');
+    } else { showToast('Failed to post comment', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { if (input) input.disabled = false; }
+}
+
+async function deletePost(postId) {
+  if (!confirm('Delete this post?')) return;
+  try {
+    const res = await fetch(API + `/api/posts/${postId}`, { method: 'DELETE', headers: getHeaders() });
+    if (res.ok) {
+      document.getElementById('post-'+postId)?.remove();
+      showToast('Post deleted', 'success');
+    } else { showToast('Failed to delete post', 'error'); }
+  } catch(e) { showToast('Network error', 'error'); }
+}
+
+function openCreateModal() { document.getElementById('create-modal').classList.add('open'); }
+function closeCreateModal() {
+  document.getElementById('create-modal').classList.remove('open');
+  document.getElementById('create-desc').value = '';
+  document.getElementById('create-imageurl').value = '';
+  document.getElementById('create-category').value = 'General';
+  document.getElementById('img-preview').innerHTML = '<div class="img-placeholder"><div class="icon">📸</div><p>Paste an image URL below to preview</p></div>';
+  document.getElementById('create-alert').className = 'alert';
+}
+
+function previewImage(url) {
+  const el = document.getElementById('img-preview');
+  if (!url) { el.innerHTML = '<div class="img-placeholder"><div class="icon">📸</div><p>Paste an image URL below to preview</p></div>'; return; }
+  el.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'><div class=\\'icon\\'>✕</div><p>Invalid image URL</p></div>'">`;
+}
+
+async function doCreatePost() {
+  const description = document.getElementById('create-desc').value.trim();
+  const imageUrl = document.getElementById('create-imageurl').value.trim() || null;
+  const category = document.getElementById('create-category').value || 'General';
+  if (!description) {
+    const a = document.getElementById('create-alert');
+    a.textContent = 'Please add a description.'; a.className = 'alert error'; return;
+  }
+  const btn = document.getElementById('create-post-btn');
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    const res = await fetch(API + '/api/posts', {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ description, imageUrl, category })
+    });
+    if (res.ok) {
+      closeCreateModal();
+      showToast('Look posted! ✨', 'success');
+      loadCategories(); loadFeed(); loadExplore();
+    } else {
+      const d = await res.json();
+      const a = document.getElementById('create-alert');
+      a.textContent = d.error || 'Failed to create post.'; a.className = 'alert error';
+    }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Post Look'; }
+}
+
+async function toggleFollow(userId, btn) {
+  const isFollowing = btn.classList.contains('following');
+  const method = isFollowing ? 'DELETE' : 'POST';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + `/api/users/${userId}/follow`, { method, headers: getHeaders() });
+    if (res.ok) {
+      btn.classList.toggle('following', !isFollowing);
+      btn.classList.toggle('not-following', isFollowing);
+      btn.textContent = isFollowing ? 'Follow' : 'Following';
+      showToast(isFollowing ? 'Unfollowed' : 'Following!', 'success');
+      loadFeed();
+    } else {
+      const d = await res.json();
+      showToast(d.error || 'Action failed', 'error');
+    }
+  } catch(e) { showToast('Network error', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+async function viewUser(userId) {
+  if (currentUser && userId === currentUser.id) { showPage('profile'); return; }
+  showPage('user');
+  const el = document.getElementById('user-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const userR = await fetch(API + `/api/users/${userId}`, { headers: getHeaders() });
+    const user = await userR.json();
+    const postsR = await fetch(API + `/api/posts/user/${user.username}`, { headers: getHeaders() });
+    const posts = await postsR.json();
+    const initials = user.username[0].toUpperCase();
+    el.innerHTML = `
+      <div class="profile-hero">
+        <div class="profile-top">
+          <div class="profile-pic">${initials}</div>
+          <div class="profile-info">
+            <div class="profile-username">@${user.username}</div>
+            <div class="profile-bio">${user.bio || 'No bio yet'}</div>
+            <div class="profile-stats">
+              <div class="pstat"><div class="pstat-num">${posts.length}</div><div class="pstat-label">Posts</div></div>
+              <div class="pstat"><div class="pstat-num">${user.followersCount}</div><div class="pstat-label">Followers</div></div>
+              <div class="pstat"><div class="pstat-num">${user.followingCount}</div><div class="pstat-label">Following</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-sm follow-toggle not-following" id="view-follow-btn" onclick="toggleFollow(${userId}, this)">Follow</button>
+        </div>
+      </div>
+      <div class="post-grid">${posts.length === 0 ? '<div class="empty-state"><div class="icon">👗</div><h3>No posts yet</h3></div>' : posts.map(p => renderPostCard(p)).join('')}</div>`;
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Failed to load profile</h3></div>'; }
+}
+
+async function loadProfilePage() {
+  if (!currentUser) return;
+  const el = document.getElementById('profile-content');
+  const initials = currentUser.username[0].toUpperCase();
+  try {
+    const postsRes = await fetch(API + `/api/posts/user/${currentUser.username}`, { headers: getHeaders() });
+    const posts = await postsRes.json();
+    const meRes = await fetch(API + '/api/users/profile', { headers: getHeaders() });
+    const me = await meRes.json();
+    currentUser = me;
+    el.innerHTML = `
+      <div class="profile-hero">
+        <div class="profile-top">
+          <div class="profile-pic">${me.avatarUrl ? `<img src="${me.avatarUrl}" onerror="this.parentElement.textContent='${initials}'">` : initials}</div>
+          <div class="profile-info">
+            <div class="profile-username">@${me.username}</div>
+            <div class="profile-bio">${me.bio || 'No bio yet — add one in Settings.'}</div>
+            <div class="profile-email">${me.email}</div>
+            <div class="profile-stats">
+              <div class="pstat"><div class="pstat-num">${posts.length}</div><div class="pstat-label">Posts</div></div>
+              <div class="pstat"><div class="pstat-num">${me.followersCount}</div><div class="pstat-label">Followers</div></div>
+              <div class="pstat"><div class="pstat-num">${me.followingCount}</div><div class="pstat-label">Following</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-sm btn-outline-sm" onclick="showPage('settings')">Edit Profile</button>
+          <button class="btn-sm btn-accent-sm" onclick="openCreateModal()">+ New Look</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active">My Looks (${posts.length})</button>
+      </div>
+      <div class="post-grid">${posts.length === 0
+        ? '<div class="empty-state"><div class="icon">👗</div><h3>No posts yet</h3><p>Share your first look!</p><br><button class="btn-sm btn-accent-sm" onclick="openCreateModal()" style="margin-top:1rem">+ Create Post</button></div>'
+        : posts.map(p => renderPostCard(p)).join('')}
+      </div>`;
+  } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Failed to load profile</h3></div>'; }
+}
+
+function prefillSettings() {
+  if (!currentUser) return;
+  document.getElementById('settings-bio').value = currentUser.bio || '';
+  document.getElementById('settings-avatar').value = currentUser.avatarUrl || '';
+}
+
+async function saveProfile() {
+  const bio = document.getElementById('settings-bio').value.trim();
+  const avatarUrl = document.getElementById('settings-avatar').value.trim() || null;
+  const alertEl = document.getElementById('settings-alert');
+  try {
+    const res = await fetch(API + '/api/users/profile', {
+      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ bio, avatarUrl })
+    });
+    if (res.ok) {
+      currentUser = await res.json();
+      alertEl.textContent = 'Profile updated!'; alertEl.className = 'alert success';
+      loadProfilePage(); showToast('Profile updated!', 'success');
+    } else {
+      const d = await res.json();
+      alertEl.textContent = d.error || 'Failed to update.'; alertEl.className = 'alert error';
+    }
+  } catch(e) { alertEl.textContent = 'Network error.'; alertEl.className = 'alert error'; }
+}
+
+let searchTimer;
+function searchUsers(query) {
+  clearTimeout(searchTimer);
+  if (!query.trim()) return;
+  searchTimer = setTimeout(async () => {
+    showPage('search');
+    const el = document.getElementById('search-content');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+      const postsRes = await fetch(API + '/api/posts?page=0&size=100', { headers: getHeaders() });
+      const data = await postsRes.json();
+      const posts = data.content || [];
+      const seen = new Set(); const users = [];
+      for (const p of posts) {
+        if (!seen.has(p.authorId) && p.authorUsername.toLowerCase().includes(query.toLowerCase())) {
+          seen.add(p.authorId); users.push({ id: p.authorId, username: p.authorUsername });
+        }
+      }
+      if (users.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="icon">⌕</div><h3>No users found</h3><p>Try a different search term.</p></div>';
+      } else {
+        el.innerHTML = users.map(u => renderUserCard(u)).join('');
+      }
+    } catch(e) { el.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h3>Search failed</h3></div>'; }
+  }, 400);
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escAttr(s) {
+  return (s || '')
+          .replace(/\\/g, '\\\\')
+          .replace(/'/g, "\\'")
+          .replace(/"/g, '&quot;');
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+function logout() { localStorage.clear(); window.location.href = '/'; }
+
+document.getElementById('create-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateModal();
+});
+
+init();
+</script>
+</body>
+</html>
